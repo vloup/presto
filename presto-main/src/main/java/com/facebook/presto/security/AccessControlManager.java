@@ -140,11 +140,11 @@ public class AccessControlManager
     }
 
     @Override
-    public void checkCanSetUser(Principal principal, String userName)
+    public void checkCanSetUser(Principal principal, String userName, String catalogName)
     {
         requireNonNull(userName, "userName is null");
 
-        authenticationCheck(() -> systemAccessControl.get().checkCanSetUser(principal, userName));
+        authenticationCheck(() -> systemAccessControl.get().checkCanSetUser(principal, userName, catalogName));
     }
 
     @Override
@@ -660,7 +660,7 @@ public class AccessControlManager
             implements SystemAccessControl
     {
         @Override
-        public void checkCanSetUser(Principal principal, String userName)
+        public void checkCanSetUser(Principal principal, String userName, String catalogName)
         {
             throw new PrestoException(SERVER_STARTING_UP, "Presto server is still initializing");
         }

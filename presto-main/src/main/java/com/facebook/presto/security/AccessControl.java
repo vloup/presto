@@ -30,7 +30,7 @@ public interface AccessControl
      *
      * @throws com.facebook.presto.spi.security.AccessDeniedException if not allowed
      */
-    void checkCanSetUser(Principal principal, String userName);
+    void checkCanSetUser(Principal principal, String userName, String catalogName);
 
     /**
      * Filter the list of catalogs to those visible to the identity.

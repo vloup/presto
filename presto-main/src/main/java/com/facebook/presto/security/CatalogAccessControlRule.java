@@ -15,8 +15,12 @@ package com.facebook.presto.security;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ImmutableList;
 
+import java.security.Principal;
+import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.util.Objects.requireNonNull;
@@ -26,16 +30,19 @@ public class CatalogAccessControlRule
     private final boolean allow;
     private final Optional<Pattern> userRegex;
     private final Optional<Pattern> catalogRegex;
+    private final List<Pattern> userPatterns;
 
     @JsonCreator
     public CatalogAccessControlRule(
             @JsonProperty("allow") boolean allow,
             @JsonProperty("user") Optional<Pattern> userRegex,
-            @JsonProperty("catalog") Optional<Pattern> catalogRegex)
+            @JsonProperty("catalog") Optional<Pattern> catalogRegex,
+            @JsonProperty("user_patterns") Optional<List<Pattern>> userPatterns)
     {
         this.allow = allow;
         this.userRegex = requireNonNull(userRegex, "userRegex is null");
         this.catalogRegex = requireNonNull(catalogRegex, "catalogRegex is null");
+        this.userPatterns = userPatterns.map(ImmutableList::copyOf).orElse(ImmutableList.of());
     }
 
     public Optional<Boolean> match(String user, String catalog)
@@ -45,5 +52,31 @@ public class CatalogAccessControlRule
             return Optional.of(allow);
         }
         return Optional.empty();
+    }
+
+    public boolean matchPrincipal(Principal principal, String userName)
+    {
+        if (userPatterns.isEmpty()) {
+            return true;
+        }
+
+        if (principal == null) {
+            return false;
+        }
+
+        String principalName = principal.getName();
+
+        for (Pattern pattern : userPatterns) {
+            Matcher matcher = pattern.matcher(principalName);
+            while (matcher.matches()) {
+                for (int i = 1; i <= matcher.groupCount(); i++) {
+                    String extractedUsername = matcher.group(i);
+                    if (userName.equals(extractedUsername)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 }

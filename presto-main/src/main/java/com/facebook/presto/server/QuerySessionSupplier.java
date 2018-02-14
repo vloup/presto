@@ -113,7 +113,7 @@ public class QuerySessionSupplier
     public Session createSession(QueryId queryId, SessionContext context)
     {
         Identity identity = context.getIdentity();
-        accessControl.checkCanSetUser(identity.getPrincipal().orElse(null), identity.getUser());
+        accessControl.checkCanSetUser(identity.getPrincipal().orElse(null), identity.getUser(), context.getCatalog());
 
         SessionBuilder sessionBuilder = Session.builder(sessionPropertyManager)
                 .setQueryId(queryId)

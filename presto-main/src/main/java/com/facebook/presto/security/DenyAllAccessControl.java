@@ -53,7 +53,7 @@ public class DenyAllAccessControl
         implements AccessControl
 {
     @Override
-    public void checkCanSetUser(Principal principal, String userName)
+    public void checkCanSetUser(Principal principal, String userName, String catalogName)
     {
         denySetUser(principal, userName);
     }

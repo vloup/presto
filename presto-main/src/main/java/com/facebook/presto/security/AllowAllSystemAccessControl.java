@@ -54,7 +54,7 @@ public class AllowAllSystemAccessControl
     }
 
     @Override
-    public void checkCanSetUser(Principal principal, String userName)
+    public void checkCanSetUser(Principal principal, String userName, String catalogName)
     {
     }
 

@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import static com.facebook.presto.spi.security.AccessDeniedException.denyCatalogAccess;
+import static com.facebook.presto.spi.security.AccessDeniedException.denySetUser;
 import static com.google.common.base.Preconditions.checkState;
 import static io.airlift.json.JsonCodec.jsonCodec;
 import static java.util.Objects.requireNonNull;
@@ -90,7 +91,8 @@ public class FileBasedSystemAccessControl
                 catalogRulesBuilder.add(new CatalogAccessControlRule(
                         true,
                         Optional.of(Pattern.compile(".*")),
-                        Optional.of(Pattern.compile("system"))));
+                        Optional.of(Pattern.compile("system")),
+                        Optional.of(ImmutableList.of())));
 
                 return new FileBasedSystemAccessControl(catalogRulesBuilder.build());
             }
@@ -101,8 +103,23 @@ public class FileBasedSystemAccessControl
     }
 
     @Override
-    public void checkCanSetUser(Principal principal, String userName)
+    public void checkCanSetUser(Principal principal, String userName, String catalogName)
     {
+        if (catalogName == null) {
+            return;
+        }
+
+        for (CatalogAccessControlRule rule : catalogRules) {
+            Optional<Boolean> allowed = rule.match(userName, catalogName);
+            if (allowed.isPresent()) {
+                if (rule.matchPrincipal(principal, userName)) {
+                    return;
+                }
+                else {
+                    denySetUser(principal, userName);
+                }
+            }
+        }
     }
 
     @Override

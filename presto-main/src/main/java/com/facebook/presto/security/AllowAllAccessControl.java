@@ -27,7 +27,7 @@ public class AllowAllAccessControl
         implements AccessControl
 {
     @Override
-    public void checkCanSetUser(Principal principal, String userName)
+    public void checkCanSetUser(Principal principal, String userName, String catalogName)
     {
     }
 

@@ -51,7 +51,7 @@ public interface SystemAccessControl
      *
      * @throws AccessDeniedException if not allowed
      */
-    void checkCanSetUser(Principal principal, String userName);
+    void checkCanSetUser(Principal principal, String userName, String catalogName);
 
     /**
      * Check if identity is allowed to set the specified system property.
