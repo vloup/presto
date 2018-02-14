@@ -78,6 +78,7 @@ matches, access is denied. Each rule is composed of the following fields:
 
 * ``user`` (optional): regex to match against user name.
 * ``catalog`` (optional): regex to match against catalog name.
+* ``user_patterns`` (optional): regex to extract what principals can identify as what users.
 * ``allowed`` (required): boolean indicating whether a user has access to the catalog
 
 .. note::
@@ -109,3 +110,19 @@ catalog, and deny all other access, you can use the following rules:
       ]
     }
 
+Furthermore, if you want to ensure that a every user have been used with their
+corresponding principal, use the following rules:
+
+.. code-block:: json
+
+    {
+      "catalogs": [
+        {
+          "user_patterns": [
+            "(.*)",
+            "([a-zA-Z]+)/?.*@.*"
+          ],
+          "allow": true
+        },
+      ]
+    }
