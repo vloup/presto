@@ -64,7 +64,7 @@ public class TestAccessControlManager
     public void testInitializing()
     {
         AccessControlManager accessControlManager = new AccessControlManager(createTestTransactionManager());
-        accessControlManager.checkCanSetUser(null, "foo");
+        accessControlManager.checkCanSetUser(null, "foo", "bar");
     }
 
     @Test
@@ -72,7 +72,7 @@ public class TestAccessControlManager
     {
         AccessControlManager accessControlManager = new AccessControlManager(createTestTransactionManager());
         accessControlManager.setSystemAccessControl(AllowAllSystemAccessControl.NAME, ImmutableMap.of());
-        accessControlManager.checkCanSetUser(null, USER_NAME);
+        accessControlManager.checkCanSetUser(null, USER_NAME, "bar");
     }
 
     @Test
@@ -84,7 +84,7 @@ public class TestAccessControlManager
         AccessControlManager accessControlManager = new AccessControlManager(transactionManager);
 
         accessControlManager.setSystemAccessControl(ReadOnlySystemAccessControl.NAME, ImmutableMap.of());
-        accessControlManager.checkCanSetUser(PRINCIPAL, USER_NAME);
+        accessControlManager.checkCanSetUser(PRINCIPAL, USER_NAME, "catalog");
         accessControlManager.checkCanSetSystemSessionProperty(identity, "property");
 
         transaction(transactionManager, accessControlManager)
@@ -124,7 +124,7 @@ public class TestAccessControlManager
         accessControlManager.addSystemAccessControlFactory(accessControlFactory);
         accessControlManager.setSystemAccessControl("test", ImmutableMap.of());
 
-        accessControlManager.checkCanSetUser(PRINCIPAL, USER_NAME);
+        accessControlManager.checkCanSetUser(PRINCIPAL, USER_NAME, "test");
         assertEquals(accessControlFactory.getCheckedUserName(), USER_NAME);
         assertEquals(accessControlFactory.getCheckedPrincipal(), PRINCIPAL);
     }
@@ -217,6 +217,7 @@ public class TestAccessControlManager
 
         private Principal checkedPrincipal;
         private String checkedUserName;
+        private String checkedCatalogName;
 
         public TestSystemAccessControlFactory(String name)
         {
@@ -238,6 +239,11 @@ public class TestAccessControlManager
             return checkedUserName;
         }
 
+        public String getCheckedCatalogName()
+        {
+            return checkedCatalogName;
+        }
+
         @Override
         public String getName()
         {
@@ -251,10 +257,11 @@ public class TestAccessControlManager
             return new SystemAccessControl()
             {
                 @Override
-                public void checkCanSetUser(Principal principal, String userName)
+                public void checkCanSetUser(Principal principal, String userName, String catalogName)
                 {
                     checkedPrincipal = principal;
                     checkedUserName = userName;
+                    checkedCatalogName = catalogName;
                 }
 
                 @Override

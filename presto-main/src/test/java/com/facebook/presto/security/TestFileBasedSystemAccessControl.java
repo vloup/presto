@@ -23,6 +23,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.testng.annotations.Test;
 
+import javax.security.auth.kerberos.KerberosPrincipal;
+
 import java.util.Optional;
 import java.util.Set;
 
@@ -35,13 +37,38 @@ import static org.testng.Assert.assertThrows;
 public class TestFileBasedSystemAccessControl
 {
     private static final Identity alice = new Identity("alice", Optional.empty());
+    private static final Identity kerberosValidAlice = new Identity("alice", Optional.of(new KerberosPrincipal("alice/example.com@EXAMPLE.COM")));
+    private static final Identity kerberosInvalidAlice = new Identity("alice", Optional.of(new KerberosPrincipal("mallory/example.com@EXAMPLE.COM")));
     private static final Identity bob = new Identity("bob", Optional.empty());
     private static final Identity admin = new Identity("admin", Optional.empty());
     private static final Identity nonAsciiUser = new Identity("\u0194\u0194\u0194", Optional.empty());
-    private static final Set<String> allCatalogs = ImmutableSet.of("secret", "open-to-all", "all-allowed", "alice-catalog", "allowed-absent", "\u0200\u0200\u0200");
+    private static final Set<String> allCatalogs = ImmutableSet.of("secret", "open-to-all", "all-allowed", "alice-catalog", "allowed-absent", "\u0200\u0200\u0200", "alice-catalog-kerberos");
     private static final QualifiedObjectName aliceTable = new QualifiedObjectName("alice-catalog", "schema", "table");
     private static final QualifiedObjectName aliceView = new QualifiedObjectName("alice-catalog", "schema", "view");
     private static final CatalogSchemaName aliceSchema = new CatalogSchemaName("alice-catalog", "schema");
+
+    @Test
+    public void testSetUserOperations()
+    {
+        TransactionManager transactionManager = createTestTransactionManager();
+        AccessControlManager accessControlManager = newAccessControlManager(transactionManager);
+
+        try {
+            accessControlManager.checkCanSetUser(null, alice.getUser(), "alice-catalog-kerberos");
+            throw new AssertionError("expected AccessDeniedException");
+        }
+        catch (AccessDeniedException expected) {
+        }
+        accessControlManager.checkCanSetUser(kerberosValidAlice.getPrincipal().get(), alice.getUser(), null);
+
+        accessControlManager.checkCanSetUser(kerberosValidAlice.getPrincipal().get(), alice.getUser(), "alice-catalog-kerberos");
+        try {
+            accessControlManager.checkCanSetUser(kerberosInvalidAlice.getPrincipal().get(), alice.getUser(), "alice-catalog-kerberos");
+            throw new AssertionError("expected AccessDeniedException");
+        }
+        catch (AccessDeniedException expected) {
+        }
+    }
 
     @Test
     public void testCatalogOperations()
@@ -52,7 +79,7 @@ public class TestFileBasedSystemAccessControl
         transaction(transactionManager, accessControlManager)
                 .execute(transactionId -> {
                     assertEquals(accessControlManager.filterCatalogs(admin, allCatalogs), allCatalogs);
-                    Set<String> aliceCatalogs = ImmutableSet.of("open-to-all", "alice-catalog", "all-allowed");
+                    Set<String> aliceCatalogs = ImmutableSet.of("open-to-all", "alice-catalog", "all-allowed", "alice-catalog-kerberos");
                     assertEquals(accessControlManager.filterCatalogs(alice, allCatalogs), aliceCatalogs);
                     Set<String> bobCatalogs = ImmutableSet.of("open-to-all", "all-allowed");
                     assertEquals(accessControlManager.filterCatalogs(bob, allCatalogs), bobCatalogs);

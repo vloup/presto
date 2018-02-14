@@ -35,6 +35,15 @@
       "user": "\u0194\u0194\u0194",
       "catalog": "\u0200\u0200\u0200",
       "allow": true
+    },
+    {
+      "catalog": "alice-catalog-kerberos",
+      "user": "alice",
+      "allow": true,
+      "user_patterns": [
+        "(.*)",
+        "([a-zA-Z]+)/?.*@.*"
+      ]
     }
   ]
 }
